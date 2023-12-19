@@ -1,57 +1,50 @@
-<?php // Author: Mitchell Bennis - mitch@elementengage.com
-	// Version 1.5.2 - 12.19.23
-	// PHP 8 Approved
+<?php // Author: Mitchell Bennis
 
-// Backup all the SQL databases for the user and then email and/or FTP away an archive file.
+// Backup all the SQL databases for the user and then either email or FTP away an archive file.
+// !!! This file shall NOT be located in a publicly accessible location.
+	
+// exit('Offline...');
+	
+// USAGE: Use Command Line or CRON
+// cd /home/elementengage/
+// php eeBackup.php
 
 // Configuration ===============================
 $eeBackup = TRUE; // Back up all databases
 $eeFTPResult = TRUE; // Put the backup file on another server
 $eeEmailResult = TRUE; // Send and email with the attached backups
-$eeDeleteLocalBackup = TRUE; // Keep a local backup file.
+$eeDeleteLocalBackup = FALSE; // Keep a local backup file.
 
-// DB & FTP Connection Info 
-if(is_readable('../eeConnect.php')) { // External Connection Info
-	
-	require_once('../eeConnect.php'); // Contains connection info below
+DEFINE('SERVER', 'eeDotNet');
 
-} else { // Not in a public dir
-	
-	// USAGE: Use Command Line or CRON
-	// cd /home/elementengage/
-	// php eeBackup.php
-	
-	// Database Configuration
-	DEFINE('DB_USER', 'eeBackupUser');
-	DEFINE('DB_PASSWORD', 'paSSworD'); // Best not contain special chars on command line
-	DEFINE('DB_HOST', 'localhost');
-	$eeExcluded = array('mysql', 'information_schema', 'performance_schema', 'sys'); // Don't back up these databases
-	
-	// FTP Configuration
-	DEFINE('FTP_SERVER', '1.22.33.444'); // Destination FTP Server
-	DEFINE('FTP_USER', 'backup@my-other-server.com'); // FTP Username
-	DEFINE('FTP_PASSWORD', 'paSSworD'); // Password
-	DEFINE('FTP_REMOTE', 'backup_files/'); // Use trailing slash
-	
-	// Local Configuration
-	DEFINE('SERVER', 'eeDotNet'); // The name of this server
-	DEFINE('BACKUP_FOLDER', __DIR__ . '/backup_files/'); // Local Backup Files
-	
-	// Email Configuration
-	DEFINE('EMAIL_TO', 'me@my-address.com');
-	DEFINE('EMAIL_FROM', 'mail@this-server.com');
-	DEFINE('EMAIL_MaxAttachSize', 20971520); // Files over 20 MB will not be sent
-	$eeSubject = SERVER . ' Backup Job: ' . date('m-d-Y');
-	
-	// Amazon S3 Configuration- Coming Soon
-}
+// Database Configuration
+DEFINE('DB_USER', 'eeBackup');
+DEFINE('DB_PASSWORD', 'elemenT0606'); // Must not contain $
+DEFINE('DB_HOST', 'localhost');
+$eeExcluded = array('mysql', 'information_schema', 'performance_schema', 'sys'); // Don't back up these databases
+
+// FTP Configuration
+DEFINE('FTP_SERVER', '3.14.46.144');
+DEFINE('FTP_USER', 'backup@elementengage.com');
+DEFINE('FTP_PASSWORD', 'e!eMenT.2006');
+DEFINE('FTP_REMOTE', 'backup_files/'); // Use trailing slash
+
+// Email Configuration
+DEFINE('EMAIL_TO', 'mail@ee-email.net');
+DEFINE('EMAIL_FROM', 'mail@elementengage.com');
+DEFINE('EMAIL_MaxAttachSize', 52428800);
+$eeSubject = SERVER . ' Backup Job: ' . date('m-d-Y');
+
+// Local Backup Files
+DEFINE('BACKUP_FOLDER', '/home/elementengage/eeBackup/backup_files/');
+
+
+// Script Setup ===================================
 
 // Error Reporting
 ini_set("log_errors", TRUE);
 error_reporting(E_ALL);
 ini_set ('display_errors', TRUE);
-
-// Script Setup ===================================
 
 $eeCleanUp = array(); // Delete local working backup files after successful save.
 
@@ -75,8 +68,8 @@ if(is_object($eeClass)) { // Check
 	
 	$eeDatabases = $eeClass->eeDB_ListAllDatabases(); // Get a list of the databases
 	
-	// Uncomment to test your connection first
-	// print_r($eeDatabases); exit;
+	// print_r($eeDatabases);
+	// exit;
 	
 	if( !empty($eeDatabases) ) {
 		
@@ -353,28 +346,17 @@ class eeBackupClass {
 		
 		global $eeLog;
 		
-		if($eeSubject && $eeBody) {
+		if( $eeSubject && $eeBody ) {
 			
 			// Get PHPMailer
-			require_once('PHPMailer/src/PHPMailer.php');
-			require_once('PHPMailer/src/SMTP.php');
-			require_once('PHPMailer/src/Exception.php');
+			require_once( __DIR__ . '/PHPMailer/src/PHPMailer.php' );
+			require_once( __DIR__ . '/PHPMailer/src/Exception.php' );
 			
 			$mail = new PHPMailer(TRUE);
 			
 			try {
 				
-				// Server settings
-				// Uncomment and configure these if SMTP is needed
-				//$mail->isSMTP();
-				//$mail->Host = 'smtp.example.com';
-				//$mail->SMTPAuth = true;
-				//$mail->Username = 'smtp_username';
-				//$mail->Password = 'smtp_password';
-				//$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-				//$mail->Port = 587;
-	
-				// Recipients
+				//Recipients
 				$mail->setFrom(EMAIL_FROM, 'EE Backups');
 				$mail->addAddress(EMAIL_TO, 'EE Backups');
 				$mail->addReplyTo(EMAIL_FROM, 'EE Backups');
@@ -382,14 +364,14 @@ class eeBackupClass {
 				// Check if $eeFile is provided and exists, then attach
 				if ($eeFile && file_exists($eeFile)) {
 					$mail->addAttachment($eeFile, basename($eeFile));
-				} elseif ($eeFile) {
+				} else {
 					throw new Exception("Attachment file not found: " . basename($eeFile));
 				}
 				
 				// Content
 				$mail->isHTML(false); // Set email format to plain text
 				$mail->Subject = $eeSubject;
-				$mail->Body = $eeBody;
+				$mail->Body    = $eeBody;
 				
 				$mail->send();
 				
@@ -411,7 +393,6 @@ class eeBackupClass {
 			return FALSE;
 		}
 	}
-
 
 }
 
