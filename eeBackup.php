@@ -363,16 +363,6 @@ class eeBackupClass {
 			$mail = new PHPMailer(TRUE);
 			
 			try {
-				
-				// Server settings
-				// Uncomment and configure these if SMTP is needed
-				//$mail->isSMTP();
-				//$mail->Host = 'smtp.example.com';
-				//$mail->SMTPAuth = true;
-				//$mail->Username = 'smtp_username';
-				//$mail->Password = 'smtp_password';
-				//$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-				//$mail->Port = 587;
 	
 				// Recipients
 				$mail->setFrom(EMAIL_FROM, 'EE Backups');
