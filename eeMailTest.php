@@ -24,7 +24,7 @@ function mailAttached() {
 	$eeFrom = 'mail@elementengage.net';
 	$eeSubject = 'Backup Mail Test';
 	$eeBody = 'Testing the backup email sending.';
-	$eeFile = 'backup-files/eeTestFile.zip';
+	$eeFile = 'backup_files/eeTestFile.zip';
 	
 	if(is_file($eeFile)) {
 			
